@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider"
 import ModeToggle from "@/components/togglemode"
-
+import "./globals.css"
 export default function RootLayout({ children }) {
   return (
     <>
@@ -8,7 +8,9 @@ export default function RootLayout({ children }) {
         <head />
         <body>
           <ThemeProvider
-            
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
           >
             {children}
             <ModeToggle />
