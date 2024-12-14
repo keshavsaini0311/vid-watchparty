@@ -60,8 +60,13 @@ export default function page() {
         body: JSON.stringify(LoginData),
       });
       const data = await res.json();
+      if(data.success===false){
+        toast.error(data.message);
+        return
+      }
+      toast.success(data.message);
       router.push("/");
-      console.log(data);
+      
     } catch (error) {
       console.log(error);
     }
