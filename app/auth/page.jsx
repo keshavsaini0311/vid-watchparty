@@ -17,7 +17,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import React from "react"
-import { toast } from "react-hot-toast"
+
 import { useRouter } from "next/navigation"
 
 
@@ -62,10 +62,10 @@ export default function page() {
       });
       const data = await res.json();
       if(data.success===false){
-        toast.error(data.message);
+        toast.error("Invalid credentials");
         return
       }
-      toast.success(data.message);
+      toast.success("Logged in successfully");
       router.push("/");
       
     } catch (error) {
