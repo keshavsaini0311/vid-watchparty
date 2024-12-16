@@ -17,7 +17,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs"
 import React from "react"
-
+import { toast } from "react-hot-toast"
 import { useRouter } from "next/navigation"
 
 
@@ -44,7 +44,12 @@ export default function page() {
         body: JSON.stringify(SignUpdata),
       });
       const data = await res.json();
-      console.log(data);
+      if(data.success===false){
+        toast.error(data.message);
+        return
+      }
+      toast.success("User created successfully");
+      
     } catch (error) {
       console.log(error);
     }
