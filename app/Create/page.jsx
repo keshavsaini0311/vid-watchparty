@@ -6,6 +6,13 @@ import { useActionState, useState, useEffect } from 'react';
 function page() {
   const [url, formAction] = useActionState(upload, null);
   const [id, setId] = useState('');
+  const [vid, setSrc] = useState('');
+
+  useEffect(() => {
+    if (url) {
+      setSrc(url);
+    }
+  }, [url]);
 
   useEffect(() => {
     const getuserid = async () => {
@@ -19,7 +26,7 @@ function page() {
 return(
     <div className='min-h-screen flex-col items-center justify-between p-10 mt-20'>
       
-    {url ? 
+    {vid ? 
     <div className="">
     <CldVideoPlayer width="860" height="470" src={url} />
     </div>:

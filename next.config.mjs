@@ -1,10 +1,11 @@
+import { withNextVideo } from "next-video/process";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     experimental: {
         serverActions:{
-            bodySizeLimit: '100mb'
+            bodySizeLimit: '25gb'
         }
     }
 };
 
-export default nextConfig;
+export default withNextVideo(nextConfig);
