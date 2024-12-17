@@ -18,6 +18,7 @@ export const config = {
     matcher: [
         "/",
         "/auth",
-        "/Create",
+        "/room",
+        "/room/:id*",
     ]
 }
