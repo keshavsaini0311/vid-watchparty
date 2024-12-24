@@ -2,7 +2,6 @@
 import { useState,useEffect,useRef } from 'react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { app } from '@/lib/firebase'
-import img from '@/public/cloud-upload-regular-240.png'
 import { useRouter } from 'next/navigation';
 
 function page() {
@@ -12,19 +11,25 @@ function page() {
   const[file, setFile] = useState(undefined)
   const [filePerc, setFilePerc] = useState(0)
   const [fileUploadError, setFileUploadError] = useState(false)
-  const[vidurl,setVidurl]=useState("")
-  const [id, setId] = useState('');
+  const[formdata,setformdata]=useState({
+    vidurl:"",
+    id:"",
+  })
 
   useEffect(() => {
+
     const getuserid = async () => {
+      try{
       const response = await fetch('/api/me');
       const data = await response.json();
       console.log(data);
-      
-      setId(data._id);
+      setformdata({...formdata,id:data._id})
+      }catch(error){
+        console.log(error);
+      }
     }
     getuserid();
-  }, [setId]);
+  }, [setformdata]);
 
   useEffect(() => {
     if(file){
@@ -33,7 +38,7 @@ function page() {
   }, [file])
   const handleFileUpload = (file) => {
     const storage = getStorage(app)
-    const fileName = file.name
+    const fileName = formdata.id
     const storageRef = ref(storage, fileName)
     const uploadTask = uploadBytesResumable(storageRef, file)
 
@@ -50,55 +55,44 @@ function page() {
       () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
          
-           setVidurl(downloadURL);
+          setformdata({...formdata,vidurl:downloadURL})
         })
       }
     )
   }
 
 
-  const handlesubmit = async () => {
-    try {
-      if(!vidurl||!id){
-        console.log("data not present");
-        return;
-      }
-      const jsondata={
-        vidurl:vidurl,
-        id:id
-      }
-      console.log(jsondata);
-      
+  const handlesubmit = async (event) => {
+    event.preventDefault();
+    try{
       const res = await fetch("/api/vid", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(jsondata),
+        body: JSON.stringify(formdata),
       });
       const data = await res.json();
       console.log(data);
       
       if(data.success===false){
-        toast.error(data.message);
+        console.log(data.message);
         return
       }
-      //router.push(`/room/${id}`);
-      
-    } catch (error) {
+      router.push(`/room/${formdata.id}`);
+    }catch(error){
       console.log(error);
     }
+    
   }
 
-  console.log(vidurl);
-  console.log(id);
   
     return (
         <div className="box">
             
             <form  className='flex flex-col gap-4'>
         <input onChange={(e)=>setFile(e.target.files[0])} type="file" ref={fileRef} className="hidden" accept="video/*" />
-        <img onClick={() => fileRef.current.click()} className='mt-2 self-center cursor-pointer object-cover w-32 h-32 rounded-full' src={img} alt="" />
+        <img onClick={() => fileRef.current.click()} className='mt-2 self-center cursor-pointer object-cover w-32 h-32 rounded-full' src="https://www.google.com/imgres?q=image%20placeholder&imgurl=https%3A%2F%2Fwww.svgrepo.com%2Fshow%2F508699%2Flandscape-placeholder.svg&imgrefurl=https%3A%2F%2Fwww.svgrepo.com%2Fsvg%2F508699%2Flandscape-placeholder&docid=9QbaVFfobw8WtM&tbnid=ILb0VdrDiOSHxM&vet=12ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA..i&w=800&h=800&hcb=2&ved=2ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA" alt="" />
 <p className='text-center'>
   {fileUploadError ? (
     <span className='text-red-500'>Upload Failed</span>

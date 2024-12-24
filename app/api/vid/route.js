@@ -7,7 +7,8 @@ connectDB();
 export async function POST(req) {
     try {
         const { vidurl,id } = await req.json();
-
+        
+        
         if (!vidurl || !id) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
@@ -19,7 +20,7 @@ export async function POST(req) {
 
         user.vidurl = vidurl;
         await user.save();
-
+        
         return NextResponse.json({ message: "Video uploaded successfully", success: true }, { status: 201 });
     } catch (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,7 +1,5 @@
 "use client"
 import React,{useEffect, useState,use} from 'react'
-import { CldVideoPlayer } from 'next-cloudinary';
-import 'next-cloudinary/dist/cld-video-player.css';
 
 const page  = ({params}) => {
     
@@ -28,7 +26,9 @@ const page  = ({params}) => {
     <div>
       <h1>Room {id}</h1>
       {vidurl &&
-      <CldVideoPlayer src={vidurl} muted />
+      <video controls>
+        <source src={vidurl} type="video/mp4" />
+      </video>
 }
     </div>
   )
