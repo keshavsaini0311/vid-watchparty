@@ -1,51 +1,113 @@
 "use client"
-import { CldVideoPlayer } from 'next-cloudinary';
-import 'next-cloudinary/dist/cld-video-player.css';
-import { upload } from '@/lib/upload';
+import { useState,useEffect,useRef } from 'react';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { app } from '@/lib/firebase'
 import { useRouter } from 'next/navigation';
-import { useActionState, useState, useEffect } from 'react';
 
 function page() {
 
-  const router = useRouter();
-
-  const [url, formAction] = useActionState(upload, null);
-  const [id, setId] = useState('');
+  const router=useRouter();
+  const fileRef = useRef()
+  const[file, setFile] = useState(undefined)
+  const [filePerc, setFilePerc] = useState(0)
+  const [fileUploadError, setFileUploadError] = useState(false)
+  const[formdata,setformdata]=useState({
+    vidurl:"",
+    id:"",
+  })
 
   useEffect(() => {
-    if (url) {
-      router.push(`/room/${id}`);
-    }
-  }, [url]);
 
-  useEffect(() => {
     const getuserid = async () => {
+      try{
       const response = await fetch('/api/me');
       const data = await response.json();
-      setId(data._id);
+      console.log(data);
+      setformdata({...formdata,id:data._id})
+      }catch(error){
+        console.log(error);
+      }
     }
     getuserid();
-  }, []);
+  }, [setformdata]);
 
-  console.log(url);
+  useEffect(() => {
+    if(file){
+      handleFileUpload(file)
+    }
+  }, [file])
+  const handleFileUpload = (file) => {
+    const storage = getStorage(app)
+    const fileName = formdata.id
+    const storageRef = ref(storage, fileName)
+    const uploadTask = uploadBytesResumable(storageRef, file)
+
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        setFilePerc(Math.round(progress))
+        },
+      (error) => {
+        setFileUploadError(true)
+        },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+         
+          setformdata({...formdata,vidurl:downloadURL})
+        })
+      }
+    )
+  }
+
+
+  const handlesubmit = async (event) => {
+    event.preventDefault();
+    try{
+      const res = await fetch("/api/vid", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formdata),
+      });
+      const data = await res.json();
+      console.log(data);
+      
+      if(data.success===false){
+        console.log(data.message);
+        return
+      }
+      router.push(`/room/${formdata.id}`);
+    }catch(error){
+      console.log(error);
+    }
+    
+  }
+
   
-    
-return(
-    <div className='min-h-screen flex-col items-center justify-between p-10 mt-20'>
-     
-    <div className="">
-      <h1 className='text-xl font-bold text-center pb-10'>How to upload a video to Cloudinary in Next.js App Router</h1>
-      <div className="flex justify-center my-10 items-center">
-        <form action={formAction}>
-          <input type="text" name="id" id="id" className='hidden' defaultValue={id} />
-          <input type="file" name='video' accept="video/*" />
-          <button className='bg-blue-800 text-white p-2 rounded-md'>Upload</button>
-        </form>
-      </div>
-    </div>
-    
-    </div>
-  )
+    return (
+        <div className="box">
+            
+            <form  className='flex flex-col gap-4'>
+        <input onChange={(e)=>setFile(e.target.files[0])} type="file" ref={fileRef} className="hidden" accept="video/*" />
+        <img onClick={() => fileRef.current.click()} className='mt-2 self-center cursor-pointer object-cover w-32 h-32 rounded-full' src="https://www.google.com/imgres?q=image%20placeholder&imgurl=https%3A%2F%2Fwww.svgrepo.com%2Fshow%2F508699%2Flandscape-placeholder.svg&imgrefurl=https%3A%2F%2Fwww.svgrepo.com%2Fsvg%2F508699%2Flandscape-placeholder&docid=9QbaVFfobw8WtM&tbnid=ILb0VdrDiOSHxM&vet=12ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA..i&w=800&h=800&hcb=2&ved=2ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA" alt="" />
+<p className='text-center'>
+  {fileUploadError ? (
+    <span className='text-red-500'>Upload Failed</span>
+  ): filePerc >0&& filePerc < 100 ? (
+      <span className='t ext-slate-500'>{filePerc}%</span>
+    ): filePerc === 100 ? (
+        <span className='text-green-500'>Uploaded Successfully</span>
+      ): (
+        ""
+      )}
+      </p>
+      <button onClick={handlesubmit}>go to room</button>
+      </form>
+        </div>
+    );
 }
 
-export default page
+export default page;
