@@ -1,18 +1,19 @@
 // server.js
-const { createServer } = require('http');
-const next = require('next');
-const socketIo = require('socket.io');
+import { createServer } from "node:http";
+import next from "next";
+import { Server } from "socket.io";
 
-const dev = process.env.NODE_ENV !== 'production';
-const app = next({ dev });
-const handle = app.getRequestHandler();
+const dev = process.env.NODE_ENV !== "production";
+const hostname = "localhost";
+const port = 3000;
+const app = next({ dev, hostname, port });
+const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
-    const server = createServer((req, res) => {
-        handle(req, res);
-    });
+  const httpServer = createServer(handler);
 
-    const io = socketIo(server);
+  const io = new Server(httpServer);
+
 
     let rooms = {}; 
 
@@ -37,7 +38,7 @@ app.prepare().then(() => {
         });
     });
 
-    server.listen(3000, (err) => {
+    httpServer.listen(port, (err) => {
         if (err) throw err;
         console.log('> Ready on http://localhost:3000');
     });
