@@ -28,13 +28,14 @@ const page  = ({params}) => {
         
 
       useEffect(() => {
-        if (roomId) {
+        if (roomId&&vidurl) {
             socket = io();
 
             socket.emit('joinRoom', roomId);
 
             socket.on('sync', (state) => {
-                setTimestamp(state.timestamp);
+              
+              videoRef.current.currentTime =state.timestamp;
                 setPlaying(state.playing);
             });
         }
@@ -42,7 +43,7 @@ const page  = ({params}) => {
         return () => {
             if (socket) socket.disconnect();
         };
-    }, [roomId]);
+    }, [roomId,vidurl]);
 
     const togglePlayPause = () => {
         const newState = { timestamp, playing: !playing };
@@ -134,6 +135,10 @@ const page  = ({params}) => {
 
         setCurrentDurationOfVideo(parseFloat(e.target.value));
         videoRef.current.currentTime = parseFloat(e.target.value);
+        const newState = { timestamp: parseFloat(e.target.value), playing };
+        setPlaying(newState.playing);
+        
+        socket.emit('seek', roomId, newState);
     }
 
 
@@ -144,7 +149,7 @@ const page  = ({params}) => {
             <video
                 ref={videoRef}
                 src={vidurl}
-                
+                controls
             />
             
             <div className='customVideoTagControlsClass'>

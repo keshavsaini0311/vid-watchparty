@@ -22,6 +22,7 @@ app.prepare().then(() => {
             socket.join(roomId);
             if (rooms[roomId]) {
                 socket.emit('sync', rooms[roomId]);
+                
             } else {
                 rooms[roomId] = { timestamp: 0, playing: false };
             }
@@ -32,8 +33,9 @@ app.prepare().then(() => {
             io.to(roomId).emit('sync', state);
         });
 
-        socket.on('seek', (roomId, timestamp) => {
-            rooms[roomId].timestamp = timestamp;
+        socket.on('seek', (roomId, state) => {
+            rooms[roomId].timestamp = state.timestamp;
+            
             io.to(roomId).emit('sync', rooms[roomId]);
         });
     });
