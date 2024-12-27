@@ -1,12 +1,10 @@
 "use client"
 import React,{useEffect, useState,use,useRef} from 'react'
-import { useRouter } from 'next/navigation';
 import io from 'socket.io-client';
 
 let socket;
 
 const page  = ({params}) => {
-    const router = useRouter();
     const {roomId} =  use(params);
     const [vidurl, setVidurl] = useState('');
     const [playing,setPlaying]=useState(false);
@@ -33,11 +31,10 @@ const page  = ({params}) => {
             socket.on('sync', (state) => {
                 
                 videoRef.current.currentTime =state.timestamp;
-                
             });
 
             socket.on('play',(state)=>{
-                
+                videoRef.current.currentTime =state.timestamp;
                 setPlaying(state.playing);
                 if(state.playing){videoPlay()}
                 else {videostop()}
@@ -49,41 +46,11 @@ const page  = ({params}) => {
         };
     }, [roomId,vidurl]);
 
-
-    const [durationOfVideo, setDurationOfVideo] = useState(0);
-    const [currentDurationOfVideo, setCurrentDurationOfVideo] = useState(0);
-
     const videoRef = useRef();
 
-    const getDurationOfVideo = () => {
-
-        const videoIntervalTime = setInterval(() => {
-
-            setCurrentDurationOfVideo(parseFloat(videoRef.current.currentTime));
-
-            if (parseFloat(videoRef.current.currentTime) >= durationOfVideo)
-            {
-
-                clearVideoInterval();
-            }
-
-        }, 1000)
-
-
-
-        const clearVideoInterval = () => {
-            clearInterval(videoIntervalTime);
-        }
-
-    }
 
     const videoPlay = () => {
-        
-        videoRef.current.play();
-        setDurationOfVideo(videoRef.current.duration);
-        
-        getDurationOfVideo();
-        
+        videoRef.current.play();        
     }
     
 
@@ -92,19 +59,9 @@ const page  = ({params}) => {
         videoRef.current.pause();
     }
 
-    const videoDuration = (e) => {
-
-        setCurrentDurationOfVideo(parseFloat(e.target.value));
-        videoRef.current.currentTime = parseFloat(e.target.value);
-        const newState = { timestamp: parseFloat(e.target.value), playing };
-        setPlaying(newState.playing);
-        
-        socket.emit('seek', roomId, newState);
-    }
 
     const toggleplaying =()=>{
-        
-        const newState = { timestamp:currentDurationOfVideo,playing:!playing };
+        const newState = { timestamp:videoRef.current.currentTime,playing:!playing };
 
         socket.emit('playPause',roomId,newState);
     }
@@ -114,16 +71,14 @@ const page  = ({params}) => {
        <h1>Room: {roomId}</h1>
        {vidurl &&<>
             <video
+                className='relative z-0'
                 ref={videoRef}
                 src={vidurl}
+                onPause={toggleplaying}
+                onPlay={toggleplaying}
                 controls
-            />
-            
-            <div className='customVideoTagControlsClass'>
-                <button onClick={toggleplaying}>Play</button>
-                <label>playback speed</label>
-                <label><b>Scrubbing Video</b></label><input type='range' min="0" max={durationOfVideo} value={currentDurationOfVideo} onChange={videoDuration} />
-            </div>
+                muted
+                />
           </>
        }
     </div>
