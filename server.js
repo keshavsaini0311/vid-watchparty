@@ -24,13 +24,14 @@ app.prepare().then(() => {
                 socket.emit('sync', rooms[roomId]);
                 
             } else {
-                rooms[roomId] = { timestamp: 0, playing: false };
+                rooms[roomId] = { timestamp: 0.00, playing: false };
             }
         });
 
         socket.on('playPause', (roomId, state) => {
             rooms[roomId] = state;
-            io.to(roomId).emit('sync', state);
+            
+            io.to(roomId).emit('play', rooms[roomId]);
         });
 
         socket.on('seek', (roomId, state) => {

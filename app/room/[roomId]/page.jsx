@@ -7,12 +7,9 @@ let socket;
 
 const page  = ({params}) => {
     const router = useRouter();
-    const [playing, setPlaying] = useState(false);
-    const [timestamp, setTimestamp] = useState(0);
-
     const {roomId} =  use(params);
     const [vidurl, setVidurl] = useState('');
-
+    const [playing,setPlaying]=useState(false);
     useEffect(() => {
         async function getvid() {
           try {
@@ -34,9 +31,16 @@ const page  = ({params}) => {
             socket.emit('joinRoom', roomId);
 
             socket.on('sync', (state) => {
-              
-              videoRef.current.currentTime =state.timestamp;
+                
+                videoRef.current.currentTime =state.timestamp;
+                
+            });
+
+            socket.on('play',(state)=>{
+                
                 setPlaying(state.playing);
+                if(state.playing){videoPlay()}
+                else {videostop()}
             });
         }
 
@@ -45,20 +49,7 @@ const page  = ({params}) => {
         };
     }, [roomId,vidurl]);
 
-    const togglePlayPause = () => {
-        const newState = { timestamp, playing: !playing };
-        setPlaying(newState.playing);
-        socket.emit('playPause', roomId, newState);
-    };
 
-    const handleSeek = (e) => {
-        const newTimestamp = e.target.value;
-        setTimestamp(newTimestamp);
-        socket.emit('seek', roomId, newTimestamp);
-    };
-
-
-    const [volumOfVideo, setVolumOfVideo] = useState(100);
     const [durationOfVideo, setDurationOfVideo] = useState(0);
     const [currentDurationOfVideo, setCurrentDurationOfVideo] = useState(0);
 
@@ -86,49 +77,19 @@ const page  = ({params}) => {
 
     }
 
-    const volumebar = (e) => {
-
-        const valumValue = parseFloat(e.target.value) / 100;
-
-        setVolumOfVideo(e.target.value);
-
-        videoRef.current.volume = valumValue.toFixed(1);
-
-    }
-
     const videoPlay = () => {
+        
         videoRef.current.play();
         setDurationOfVideo(videoRef.current.duration);
+        
         getDurationOfVideo();
-
+        
     }
+    
 
-    const videoStop = () => {
+    const videostop=()=>{
 
         videoRef.current.pause();
-    }
-
-    const videoReplay= () => {
-        setDurationOfVideo(videoRef.current.duration);
-        videoRef.current.currentTime = 0;
-        videoRef.current.play();
-
-        getDurationOfVideo();
-    }
-
-    const videoMute = () => {
-
-        videoRef.current.muted = true;
-    }
-
-    const videoUnMute = () => {
-
-        videoRef.current.muted = false;
-    }
-
-    const setVideoSpeed = (e) => {
-
-        videoRef.current.playbackRate = parseFloat(e.target.value);
     }
 
     const videoDuration = (e) => {
@@ -141,6 +102,12 @@ const page  = ({params}) => {
         socket.emit('seek', roomId, newState);
     }
 
+    const toggleplaying =()=>{
+        
+        const newState = { timestamp:currentDurationOfVideo,playing:!playing };
+
+        socket.emit('playPause',roomId,newState);
+    }
 
   return (
     <div>
@@ -153,18 +120,8 @@ const page  = ({params}) => {
             />
             
             <div className='customVideoTagControlsClass'>
-                <button onClick={videoPlay}>Play</button>
+                <button onClick={toggleplaying}>Play</button>
                 <label>playback speed</label>
-                <select onChange={ setVideoSpeed}>
-                    <option value={1.0}>normal speed</option>
-                    <option value={0.5}>slower</option>
-                    <option value={2.0}>faster speed</option>
-                </select><br />
-                <button onClick={videoStop} >Stop</button><br />
-                <button onClick={videoReplay}>Repaly</button><br />
-                <button onClick={videoMute}>Mute</button><br />
-                <button onClick={videoUnMute}>Unmute</button><br />
-                <label><b>volume</b></label><input type='range' min="0" max="100" step='10' value={volumOfVideo} onChange={volumebar} /><br /><br />
                 <label><b>Scrubbing Video</b></label><input type='range' min="0" max={durationOfVideo} value={currentDurationOfVideo} onChange={videoDuration} />
             </div>
           </>
