@@ -22,9 +22,9 @@ app.prepare().then(() => {
             socket.join(roomId);
             if (rooms[roomId]) {
                 socket.emit('sync', rooms[roomId]);
-                
+                socket.emit('newmessages',rooms[roomId].messages);
             } else {
-                rooms[roomId] = { timestamp: 0.00, playing: false };
+                rooms[roomId] = { timestamp: 0.00, playing: false,messages:[] };
             }
         });
 
@@ -38,6 +38,10 @@ app.prepare().then(() => {
             rooms[roomId].timestamp = state.timestamp;
             
             io.to(roomId).emit('sync', rooms[roomId]);
+        });
+        socket.on('msg_received', (roomId, msg) => {
+            rooms[roomId].messages.push(msg);
+            io.to(roomId).emit('msg', msg);
         });
     });
 

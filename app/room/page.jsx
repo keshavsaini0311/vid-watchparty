@@ -90,9 +90,20 @@ function page() {
     return (
         <div className="box">
             
-            <form  className='flex flex-col gap-4'>
+            <form  className='flex flex-col gap-4 p-4'>
+        <div className="flex items-center justify-center w-full">
+    <label onClick={() => fileRef.current.click()} htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-gray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+            </svg>
+            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">mp4</p>
+        </div>
         <input onChange={(e)=>setFile(e.target.files[0])} type="file" ref={fileRef} className="hidden" accept="video/*" />
-        <img onClick={() => fileRef.current.click()} className='mt-2 self-center cursor-pointer object-cover w-32 h-32 rounded-full' src="https://www.google.com/imgres?q=image%20placeholder&imgurl=https%3A%2F%2Fwww.svgrepo.com%2Fshow%2F508699%2Flandscape-placeholder.svg&imgrefurl=https%3A%2F%2Fwww.svgrepo.com%2Fsvg%2F508699%2Flandscape-placeholder&docid=9QbaVFfobw8WtM&tbnid=ILb0VdrDiOSHxM&vet=12ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA..i&w=800&h=800&hcb=2&ved=2ahUKEwjS9Pmbm8CKAxVU4jgGHVTuNjwQM3oECB0QAA" alt="" />
+    </label>
+</div> 
+
 <p className='text-center'>
   {fileUploadError ? (
     <span className='text-red-500'>Upload Failed</span>
@@ -104,7 +115,9 @@ function page() {
         ""
       )}
       </p>
+      {formdata.vidurl!==""&&
       <button onClick={handlesubmit}>go to room</button>
+      } 
       </form>
         </div>
     );
