@@ -1,27 +1,27 @@
 "use client"
 import React,{useEffect, useState,use,useRef} from 'react'
 import { io } from 'socket.io-client';
-import { Send } from 'lucide-react';
+import Message from '@/components/mesage';
+import Inputmessage from '@/components/Inputmessage';
 
 let socket;
 
 const page  = ({params}) => {
     const {roomId} =  use(params);
-    const [username,setUsername]=useState('');
+    const [user,setUser]=useState({});
     const [vidurl, setVidurl] = useState('');
     const [playing,setPlaying]=useState(false);
-    const[chatopen,setchatopen]=useState(false);
+    const [chatopen,setchatopen]=useState(false);
     const [messages,setMessages]=useState([]);
-    const [message,setMessage]=useState({});
     const scroll=useRef()
+    const videoRef = useRef();
     
     useEffect(() => {
         async function getvid() {
           try {
             const response = await fetch(`/api/users/search/${roomId}`);
             const data = await response.json();
-            
-            setUsername(data.user.username);
+            setUser(data.user);
             setVidurl(data.user.vidurl);
           } catch (error) {
             console.log(error);
@@ -29,7 +29,6 @@ const page  = ({params}) => {
         }
         getvid();
       }, []);      
-        
 
       useEffect(() => {
         if (roomId&&vidurl) {
@@ -51,7 +50,8 @@ const page  = ({params}) => {
         socket.on('msg', (msg) => {
           const newmsg={
             message:msg.message,
-            username:msg.username
+            username:msg.username,
+            time:msg.time
           }
           setMessages(prevmessages=>[...prevmessages,newmsg]);    
           
@@ -74,7 +74,6 @@ const page  = ({params}) => {
       }
     },[messages])
 
-    const videoRef = useRef();
     const videoPlay = () => {
         videoRef.current.play();        
     }
@@ -90,14 +89,7 @@ const page  = ({params}) => {
     const togglechat=()=>{
         setchatopen(!chatopen);
     }
-    const sendmessage=()=>{
-      if(message.trim()=="")return;
-      const msg={
-        message:message,
-        username:username
-      }      
-      socket.emit('msg_received',roomId,msg);
-    }
+    
   return (
     <div className=' overflow-hidden w-full'>
       <div className="flex w-full justify-evenly">
@@ -115,21 +107,18 @@ const page  = ({params}) => {
               muted
             />
 
-          <div className={`flex-col items-center max-h-screen  gap-4  top-full right-0 mt-2 p-4  bg-inherit  rounded-lg transition-transform duration-300 ease-in-out transform ${chatopen ? 'translate-x-0 sm:translate-x-0' : 'translate-x-full'}`}>
-            <div id="msgs" className="flex-col max-h-96 overflow-y-auto no-scrollbar w-full float-right">
+          <div className={`flex-col flex items-center max-h-screen  gap-4  top-full right-0 mt-2 p-4  bg-inherit  rounded-lg transition-transform duration-300 ease-in-out transform ${chatopen ? 'translate-x-0' : 'translate-x-full sm:translate-x-96'}`}>
+            <div id="msgs" className="flex-col h-96 gap-6 overflow-y-auto no-scrollbar w-full float-right">
             {
               messages.length>0&&messages.map((msg,index)=>
-                <div key={index} ref={scroll} className="">{msg.message
-                }</div>
+                <div key={index}  className="m-3">
+                <Message  className='m-3' message={msg.message} username={msg.username} time={msg.time} avatar={user.avatar}/>
+                </div>
               )
-            
             }
-              <div  className=""></div>
+            <div className="" ref={scroll}></div>
             </div>
-            <div className="flex">
-              <input type="text" onChange={(e)=>{setMessage(e.target.value)}} />
-              <button onClick={sendmessage} className=''><Send/></button>
-            </div>
+            <Inputmessage user={user} roomId={roomId}/>
           </div>
         </div>
        }

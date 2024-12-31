@@ -24,7 +24,7 @@ app.prepare().then(() => {
                 socket.emit('sync', rooms[roomId]);
                 socket.emit('newmessages',rooms[roomId].messages);
             } else {
-                rooms[roomId] = { timestamp: 0.00, playing: false,messages:[{}] };
+                rooms[roomId] = { timestamp: 0.00, playing: false,messages:[] };
             }
         });
 
