@@ -1,7 +1,7 @@
 "use client"
 import React,{useEffect, useState,use,useRef} from 'react'
 import { io } from 'socket.io-client';
-import Message from '@/components/mesage';
+import Message from '@/components/Mesage';
 import Inputmessage from '@/components/Inputmessage';
 
 let socket;
@@ -28,19 +28,15 @@ const page  = ({params}) => {
           }
         }
         getvid();
-      }, []);      
-
+      }, []); 
+           
       useEffect(() => {
         if (roomId&&vidurl) {
         socket = io();
-
         socket.emit('joinRoom', roomId);
-
-        socket.on('sync', (state) => {
-                
-            videoRef.current.currentTime =state.timestamp;
+        socket.on('sync', (state) => {       
+          videoRef.current.currentTime =state.timestamp;
         });
-
         socket.on('play',(state)=>{
             videoRef.current.currentTime =state.timestamp;
             setPlaying(state.playing);
@@ -54,14 +50,10 @@ const page  = ({params}) => {
             time:msg.time
           }
           setMessages(prevmessages=>[...prevmessages,newmsg]);    
-          
           });  
-        
         socket.on('newmessages', (msg) => {
           setMessages(msg);    
-          
           });  
-        
         }
         return () => {
             if (socket) socket.disconnect();
@@ -78,16 +70,14 @@ const page  = ({params}) => {
         videoRef.current.play();        
     }
     const videostop=()=>{
-
-        videoRef.current.pause();
+      videoRef.current.pause();
     }
     const toggleplaying =()=>{
-        const newState = { timestamp:videoRef.current.currentTime,playing:!playing };
-
-        socket.emit('playPause',roomId,newState);
+      const newState = { timestamp:videoRef.current.currentTime,playing:!playing };
+      socket.emit('playPause',roomId,newState);
     }
     const togglechat=()=>{
-        setchatopen(!chatopen);
+      setchatopen(!chatopen);
     }
     
   return (
