@@ -3,7 +3,14 @@ import { Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { io } from 'socket.io-client';
 
-let socket=io();
+
+const socket = io("http://localhost:3000", {
+  transports: ['websocket'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 2000,
+});
+
 export default function Inputmessage(props) {
     const [message,setMessage]=useState("");
     const user=props.user;

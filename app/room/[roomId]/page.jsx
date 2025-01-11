@@ -4,7 +4,12 @@ import { io } from 'socket.io-client';
 import Message from '@/components/Mesage';
 import Inputmessage from '@/components/Inputmessage';
 
-let socket;
+const socket = io("http://localhost:3000", {
+  transports: ['websocket'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 2000,
+});
 
 const page  = ({params}) => {
     const {roomId} =  use(params);
@@ -28,12 +33,11 @@ const page  = ({params}) => {
           }
         }
         getvid();
-      }, []); 
+      }, [roomId]); 
            
       useEffect(() => {
         if (roomId&&vidurl) {
-        socket = io();
-        socket.emit('joinRoom', roomId);
+          socket.emit('joinRoom', roomId);
         socket.on('sync', (state) => {       
           videoRef.current.currentTime =state.timestamp;
         });
@@ -55,9 +59,7 @@ const page  = ({params}) => {
           setMessages(msg);    
           });  
         }
-        return () => {
-            if (socket) socket.disconnect();
-        };
+
     }, [roomId,vidurl]);
 
     useEffect(()=>{
@@ -79,6 +81,8 @@ const page  = ({params}) => {
     const togglechat=()=>{
       setchatopen(!chatopen);
     }
+
+
     
   return (
     <div className=' overflow-hidden w-full'>
@@ -99,7 +103,7 @@ const page  = ({params}) => {
 
           <div className={`flex-col flex items-center max-h-screen  gap-4  top-full right-0 mt-2 p-4  bg-inherit  rounded-lg transition-transform duration-300 ease-in-out transform ${chatopen ? 'translate-x-0' : 'translate-x-full sm:translate-x-96'}`}>
             <div id="msgs" className="flex-col h-96 gap-6 overflow-y-auto no-scrollbar w-full float-right">
-            {
+            {messages&&
               messages.length>0&&messages.map((msg,index)=>
                 <div key={index}  className="m-3">
                 <Message  className='m-3' message={msg.message} username={msg.username} time={msg.time} avatar={user.avatar}/>
@@ -109,6 +113,7 @@ const page  = ({params}) => {
             <div className="" ref={scroll}></div>
             </div>
             <Inputmessage user={user} roomId={roomId}/>
+          
           </div>
         </div>
        }
