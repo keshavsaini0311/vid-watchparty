@@ -25,25 +25,28 @@ app.prepare().then(() => {
         socket.on('joinRoom', (roomId) => {
             socket.join(roomId);
             if (!rooms.roomId) {
-                rooms.roomId = { timestamp: 0.0, playing: false, messages: [] };
+                rooms[roomId] = { timestamp: 0.0, playing: false, messages: [] };
             }
-            io.to(roomId).emit('sync', rooms.roomId);
-            io.to(roomId).emit('newmessages', rooms.roomId.messages);
+            io.to(roomId).emit('sync', rooms[roomId]);
+            io.to(roomId).emit('newmessages', rooms[roomId].messages);
 
         });
 
         socket.on('playPause', (roomId, state) => {
-            rooms.roomId = state;
-            io.to(roomId).emit('play', rooms.roomId);
+
+            rooms[roomId].timestamp = state.timestamp;
+            rooms[roomId].playing = state.playing;
+
+            io.to(roomId).emit('play', rooms[roomId]);
         });
 
         socket.on('seek', (roomId, state) => {
             rooms.roomId.timestamp = state.timestamp;
-            io.to(roomId).emit('sync', rooms.roomId);
+            io.to(roomId).emit('sync', rooms[roomId]);
         });
 
         socket.on('msg_received', (roomId, msg) => {
-            rooms.roomId.messages.push(msg);
+            rooms[roomId].messages=[...rooms[roomId].messages,msg];
             io.to(roomId).emit('msg', msg);
         });
 

@@ -26,8 +26,10 @@ const page  = ({params}) => {
           try {
             const response = await fetch(`/api/users/search/${roomId}`);
             const data = await response.json();
-            setUser(data.user);
             setVidurl(data.user.vidurl);
+            const res = await fetch(`/api/me`);
+            const d = await res.json();
+            setUser(d);            
           } catch (error) {
             console.log(error);
           }
