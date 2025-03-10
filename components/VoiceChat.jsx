@@ -49,28 +49,54 @@ export default function VoiceChat({ roomId }) {
 
         // WebRTC Offer/Answer Handling
         socket.on('webrtc_offer', async (offer) => {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await peerConnection.current.createAnswer();
-          await peerConnection.current.setLocalDescription(answer);
-          socket.emit('webrtc_answer', roomId, answer);
+          try {
+            if (peerConnection.current.signalingState === 'stable') {
+              await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
+              const answer = await peerConnection.current.createAnswer();
+              await peerConnection.current.setLocalDescription(answer);
+              socket.emit('webrtc_answer', roomId, answer);
+            } else {
+              console.log('Ignoring offer - connection not in stable state');
+            }
+          } catch (error) {
+            console.error('Error handling offer:', error);
+          }
         });
 
         socket.on('webrtc_answer', async (answer) => {
-          await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+          try {
+            if (peerConnection.current.signalingState === 'have-local-offer') {
+              await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
+            } else {
+              console.log('Ignoring answer - connection not in have-local-offer state');
+            }
+          } catch (error) {
+            console.error('Error handling answer:', error);
+          }
         });
 
         socket.on('webrtc_ice_candidate', async (candidate) => {
-          if (candidate) {
-            await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+          try {
+            if (candidate && peerConnection.current.remoteDescription) {
+              await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+            }
+          } catch (error) {
+            console.error('Error adding ICE candidate:', error);
           }
         });
 
         // Join room and handle new user joining
         socket.emit('joinRoom', roomId);
         socket.on('user-joined', async () => {
-          const offer = await peerConnection.current.createOffer();
-          await peerConnection.current.setLocalDescription(offer);
-          socket.emit('webrtc_offer', roomId, offer);
+          try {
+            if (peerConnection.current.signalingState === 'stable') {
+              const offer = await peerConnection.current.createOffer();
+              await peerConnection.current.setLocalDescription(offer);
+              socket.emit('webrtc_offer', roomId, offer);
+            }
+          } catch (error) {
+            console.error('Error creating offer:', error);
+          }
         });
 
       } catch (error) {

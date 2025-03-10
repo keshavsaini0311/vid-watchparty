@@ -109,31 +109,31 @@ const page = ({params}) => {
   return (
     <div className='flex h-screen bg-background overflow-hidden'>
       <div className='flex-1 flex flex-col relative'>
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-card z-20">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-2 sm:py-3 bg-card">
           <div className="flex items-center gap-2">
             <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">Room: {roomId}</h1>
             <button
               onClick={copyRoomId}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
               title="Copy Room ID"
             >
-              {copied ? <Check size={20} /> : <Copy size={20} />}
+              {copied ? <Check size={18} /> : <Copy size={18} />}
             </button>
           </div>
           <button 
             onClick={togglechat}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors z-50"
+            className="md:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
             title={chatopen ? "Close Chat" : "Open Chat"}
           >
-            {chatopen ? <X size={24} /> : <MessageCircle size={24} />}
+            {chatopen ? <X size={20} /> : <MessageCircle size={20} />}
           </button>
         </div>
         
         <div className="flex-1 flex relative">
-          <div className="flex-1 flex items-center justify-center bg-black p-4">
+          <div className="flex-1 flex items-center justify-center bg-black">
             {vidurl && (
               <video
-                className='max-h-[calc(100vh-5rem)] w-full max-w-5xl object-contain shadow-lg rounded-lg'
+                className='h-[calc(100vh-3.5rem)] w-full object-contain'
                 ref={videoRef}
                 src={vidurl}
                 onPause={toggleplaying}
@@ -145,23 +145,24 @@ const page = ({params}) => {
           </div>
 
           <div 
-            className={`fixed md:relative right-0 top-0 h-full w-full md:w-[400px] lg:w-[450px] bg-card border-l border-border flex flex-col transition-transform duration-300 ease-in-out z-40 ${
-              chatopen ? 'translate-x-0' : 'translate-x-full'
+            className={`fixed md:static inset-0 md:w-[400px] lg:w-[450px] bg-card border-l border-border flex flex-col transition-transform duration-300 ease-in-out ${
+              chatopen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
             }`}
+            style={{ height: 'calc(100vh - 3rem)' }}
           >
             {/* Mobile chat header */}
-            <div className="md:hidden flex items-center justify-between px-4 py-3 bg-accent/50 border-b border-border">
+            <div className="md:hidden flex items-center justify-between px-4 py-2 bg-accent/50 border-b border-border">
               <h2 className="text-lg font-medium text-foreground">Chat</h2>
               <button 
                 onClick={togglechat}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-accent scrollbar-track-muted">
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="flex-1 overflow-y-auto p-3 space-y-3 no-scrollbar">
                 {messages && messages.length > 0 && messages.map((msg, index) => (
                   <div key={index}>
                     <Message message={msg.message} username={msg.username} time={msg.time} avatar={user.avatar}/>
@@ -170,7 +171,7 @@ const page = ({params}) => {
                 <div ref={scroll}></div>
               </div>
               
-              <div className="p-4 space-y-4 border-t border-border bg-card">
+              <div className="p-3 space-y-3 border-t border-border bg-card">
                 <VoiceChat roomId={roomId} />
                 <Inputmessage user={user} roomId={roomId}/>
               </div>
