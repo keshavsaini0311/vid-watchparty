@@ -22,6 +22,7 @@ const page = ({params}) => {
     const [chatopen,setchatopen]=useState(false);
     const [messages,setMessages]=useState([]);
     const [copied, setCopied] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const scroll=useRef();
     const videoRef = useRef();
     const { toast } = useToast();
@@ -61,12 +62,15 @@ const page = ({params}) => {
               time:msg.time
             }
             setMessages(prevmessages=>[...prevmessages,newmsg]);    
+            if (!chatopen) {
+              setUnreadCount(prev => prev + 1);
+            }
           });  
           socket.on('newmessages', (msg) => {
             setMessages(msg);    
           });  
         }
-      }, [roomId,vidurl]);
+      }, [roomId,vidurl, chatopen]);
 
     useEffect(()=>{
       if(scroll.current&& chatopen){
@@ -86,6 +90,9 @@ const page = ({params}) => {
     }
     const togglechat=()=>{
       setchatopen(!chatopen);
+      if (chatopen) {
+        setUnreadCount(0);
+      }
     }
 
     const copyRoomId = async () => {
@@ -122,10 +129,15 @@ const page = ({params}) => {
           </div>
           <button 
             onClick={togglechat}
-            className="md:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+            className="md:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors relative"
             title={chatopen ? "Close Chat" : "Open Chat"}
           >
             {chatopen ? <X size={20} /> : <MessageCircle size={20} />}
+            {!chatopen && unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
           </button>
         </div>
         
