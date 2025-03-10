@@ -16,7 +16,7 @@ export default function VoiceChat({ roomId }) {
   useEffect(() => {
     const setupVoiceChat = async () => {
       try {
-        // Initialize RTCPeerConnection with STUN servers
+        // Initialize RTCPeerConnection
         peerConnection.current = new RTCPeerConnection({
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
@@ -41,11 +41,6 @@ export default function VoiceChat({ roomId }) {
           }
         };
 
-        // Handle connection state changes
-        peerConnection.current.onconnectionstatechange = () => {
-          setIsConnected(peerConnection.current.connectionState === 'connected');
-        };
-
         // Handle Remote Stream
         peerConnection.current.ontrack = (event) => {
           remoteAudioRef.current.srcObject = event.streams[0];
@@ -54,8 +49,6 @@ export default function VoiceChat({ roomId }) {
 
         // WebRTC Offer/Answer Handling
         socket.on('webrtc_offer', async (offer) => {
-          if (peerConnection.current.signalingState !== "stable") return;
-          
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(offer));
           const answer = await peerConnection.current.createAnswer();
           await peerConnection.current.setLocalDescription(answer);
@@ -63,31 +56,21 @@ export default function VoiceChat({ roomId }) {
         });
 
         socket.on('webrtc_answer', async (answer) => {
-          if (peerConnection.current.signalingState === "stable") return;
-          
           await peerConnection.current.setRemoteDescription(new RTCSessionDescription(answer));
         });
 
         socket.on('webrtc_ice_candidate', async (candidate) => {
-          if (candidate && peerConnection.current.remoteDescription) {
-            try {
-              await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
-            } catch (e) {
-              console.error('Error adding received ice candidate', e);
-            }
+          if (candidate) {
+            await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
           }
         });
 
         // Join room and handle new user joining
         socket.emit('joinRoom', roomId);
         socket.on('user-joined', async () => {
-          try {
-            const offer = await peerConnection.current.createOffer();
-            await peerConnection.current.setLocalDescription(offer);
-            socket.emit('webrtc_offer', roomId, offer);
-          } catch (e) {
-            console.error('Error creating offer', e);
-          }
+          const offer = await peerConnection.current.createOffer();
+          await peerConnection.current.setLocalDescription(offer);
+          socket.emit('webrtc_offer', roomId, offer);
         });
 
       } catch (error) {
@@ -125,7 +108,7 @@ export default function VoiceChat({ roomId }) {
   };
 
   return (
-    <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+    <div className="flex items-center justify-between p-3 bg-accent/20 rounded-lg">
       <div className="flex items-center gap-3">
         <button
           onClick={toggleMute}
@@ -148,7 +131,7 @@ export default function VoiceChat({ roomId }) {
       </div>
       
       <div className="flex items-center gap-2">
-        <span className={`text-sm ${isConnected ? 'text-green-500' : 'text-gray-400'}`}>
+        <span className={`text-sm ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
           {isConnected ? 'Connected' : 'Waiting...'}
         </span>
       </div>
