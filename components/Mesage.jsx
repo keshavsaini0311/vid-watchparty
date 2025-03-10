@@ -1,32 +1,31 @@
-
-
 const Message = (props) => {
-    const message=props.message;
-    const time=props.time;
-    const username=props.username;
-    const avatar=props.avatar;
-  return (
-    <div className="flex items-start gap-2.5">
-      <img
-        className="w-8 h-8 rounded-full"
-        src={avatar}
-        alt="Jese image"
-      />
-      <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
-        <div className="flex items-center space-x-2 rtl:space-x-reverse">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            {username}
-          </span>
-          <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-            {time}
-          </span>
+    const message = props.message;
+    const time = props.time;
+    const username = props.username;
+    const avatar = props.avatar;
+    
+    return (
+        <div className="flex items-start gap-3 group hover:bg-accent/20 p-2 rounded-lg transition-colors">
+            <img
+                className="w-8 h-8 rounded-full object-cover border border-border"
+                src={avatar}
+                alt={`${username}'s avatar`}
+            />
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">
+                        {username}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                        {time}
+                    </span>
+                </div>
+                <p className="text-foreground/90 break-words">
+                    {message}
+                </p>
+            </div>
         </div>
-        <p className="text-sm font-normal py-2.5 text-gray-900 dark:text-white">
-            {message}
-        </p>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Message;
