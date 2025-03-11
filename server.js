@@ -17,18 +17,33 @@ app.prepare().then(() => {
         },
     });
 
-    let rooms = {};
+    const rooms = new Map();
+
+    const cleanupEmptyRoom = (roomId) => {
+        const room = io.sockets.adapter.rooms.get(roomId);
+        if (!room || room.size === 0) {
+            rooms.delete(roomId);
+        }
+    };
 
     io.on('connection', (socket) => {
+        let currentRoom = null;
+
         socket.on('joinRoom', (roomId) => {
+            currentRoom = roomId;
             socket.join(roomId);
             
-            if (!rooms[roomId]) {
-                rooms[roomId] = { timestamp: 0.0, playing: false, messages: [] };
+            if (!rooms.has(roomId)) {
+                rooms.set(roomId, { 
+                    timestamp: 0.0, 
+                    playing: false, 
+                    messages: [] 
+                });
             }
             
-            io.to(roomId).emit('sync', rooms[roomId]);
-            io.to(roomId).emit('newmessages', rooms[roomId].messages);
+            const roomData = rooms.get(roomId);
+            io.to(roomId).emit('sync', roomData);
+            io.to(roomId).emit('newmessages', roomData.messages);
             socket.to(roomId).emit('user-joined');
         });
 
@@ -51,21 +66,41 @@ app.prepare().then(() => {
         });
 
         socket.on('playPause', (roomId, state) => {
-            rooms[roomId].timestamp = state.timestamp;
-            rooms[roomId].playing = state.playing;
-            io.to(roomId).emit('play', rooms[roomId]);
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.timestamp = state.timestamp;
+            roomData.playing = state.playing;
+            io.to(roomId).emit('play', roomData);
         });
 
         socket.on('seek', (roomId, state) => {
-            rooms[roomId].timestamp = state.timestamp;
-            io.to(roomId).emit('sync', rooms[roomId]);
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.timestamp = state.timestamp;
+            io.to(roomId).emit('sync', roomData);
         });
 
         socket.on('msg_received', (roomId, msg) => {
-            rooms[roomId].messages=[...rooms[roomId].messages,msg];
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.messages = [...roomData.messages, msg];
             io.to(roomId).emit('msg', msg);
         });
+
+        socket.on('disconnecting', () => {
+            if (currentRoom) {
+                socket.leave(currentRoom);
+                setTimeout(() => cleanupEmptyRoom(currentRoom), 1000);
+            }
+        });
     });
+
+    // Periodic cleanup of empty rooms
+    setInterval(() => {
+        for (const roomId of rooms.keys()) {
+            cleanupEmptyRoom(roomId);
+        }
+    }, 300000); // Clean up every 5 minutes
 
     httpServer.listen(port, (err) => {
         if (err) throw err;
