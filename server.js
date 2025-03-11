@@ -20,29 +20,33 @@ app.prepare().then(() => {
     let rooms = {};
 
     io.on('connection', (socket) => {
-        console.log(`User connected: ${socket.id}`);
-
         socket.on('joinRoom', (roomId) => {
             socket.join(roomId);
+            
             if (!rooms[roomId]) {
                 rooms[roomId] = { timestamp: 0.0, playing: false, messages: [] };
             }
+            
             io.to(roomId).emit('sync', rooms[roomId]);
             io.to(roomId).emit('newmessages', rooms[roomId].messages);
-            // Notify others in the room about the new user joining
             socket.to(roomId).emit('user-joined');
         });
 
-        // WebRTC Signaling
         socket.on('webrtc_offer', (roomId, offer) => {
-            socket.to(roomId).emit('webrtc_offer', offer);
+            if (!roomId || !offer) return;
+            const room = io.sockets.adapter.rooms.get(roomId);
+            if (room && room.size > 1) {
+                socket.to(roomId).emit('webrtc_offer', offer);
+            }
         });
 
         socket.on('webrtc_answer', (roomId, answer) => {
+            if (!roomId || !answer) return;
             socket.to(roomId).emit('webrtc_answer', answer);
         });
 
         socket.on('webrtc_ice_candidate', (roomId, candidate) => {
+            if (!roomId || !candidate) return;
             socket.to(roomId).emit('webrtc_ice_candidate', candidate);
         });
 
@@ -60,10 +64,6 @@ app.prepare().then(() => {
         socket.on('msg_received', (roomId, msg) => {
             rooms[roomId].messages=[...rooms[roomId].messages,msg];
             io.to(roomId).emit('msg', msg);
-        });
-
-        socket.on('disconnect', () => {
-            console.log(`User disconnected: ${socket.id}`);
         });
     });
 

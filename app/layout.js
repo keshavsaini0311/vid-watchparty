@@ -2,6 +2,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import ModeToggle from "@/components/togglemode"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
+import { SocketProvider } from "./context/SocketContext"
 
 export default function RootLayout({ children }) {
   return (
@@ -9,15 +10,17 @@ export default function RootLayout({ children }) {
       <html lang="en" suppressHydrationWarning>
         <head />
         <body>
-          <Toaster />
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-          >
-            {children}
-            <ModeToggle />
-          </ThemeProvider>
+          <SocketProvider>
+            <Toaster />
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem
+            >
+              {children}
+              <ModeToggle />
+            </ThemeProvider>
+          </SocketProvider>
         </body>
       </html>
     </>
