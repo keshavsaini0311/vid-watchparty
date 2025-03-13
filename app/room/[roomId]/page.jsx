@@ -119,8 +119,8 @@ const page = ({params}) => {
     };
     
     return (
-        <div className='flex h-screen bg-background overflow-hidden'>
-            <div className='flex-1 flex flex-col relative'>
+        <div className='flex h-screen bg-[#0A0A0A] overflow-hidden'>
+            <div className='flex-1 flex flex-col relative bg-[#111111]'>
                 <RoomHeader 
                     roomId={roomId}
                     chatopen={chatopen}
@@ -130,7 +130,7 @@ const page = ({params}) => {
                     copied={copied}
                 />
                 
-                <div className="flex-1 flex relative">
+                <div className="flex-1 flex relative bg-[#0D0D0D]">
                     <VideoPlayer 
                         vidurl={vidurl}
                         onPlay={handlePlay}
