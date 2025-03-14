@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import RoomHeader from '@/components/RoomHeader';
 import VideoPlayer from '@/components/VideoPlayer';
 import ChatPanel from '@/components/ChatPanel';
+import { useRouter } from 'next/navigation';
 
 const page = ({params}) => {
     const socket = useSocket();
@@ -18,7 +19,9 @@ const page = ({params}) => {
     const [copied, setCopied] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const { toast } = useToast();
-    
+    const router = useRouter();
+
+
     useEffect(() => {
         async function getuser() {
           try {
@@ -41,6 +44,7 @@ const page = ({params}) => {
         if (!socket || !roomId ) return;
 
         // Join room
+        
         socket.emit('joinRoom', roomId);
         socket.emit("getRoomInfo", roomId);
         // Setup event listeners
@@ -76,6 +80,7 @@ const page = ({params}) => {
         socket.on('msg', handleMessage);
         socket.on('newmessages', handleNewMessages);
         socket.on('roomInfo', handleRoomInfo);
+        socket.on('noroom', handleNoRoom);
 
         // Cleanup function
         return () => {
@@ -93,6 +98,14 @@ const page = ({params}) => {
 
     const handleRoomInfo = (roomInfo) => {
         setVidurl(roomInfo.vidurl);
+    };
+
+    const handleNoRoom = () => {
+        toast({
+            title: "Room not found",
+            description: "Please try again.",
+        });
+        router.push('/');
     };
 
     const handlePause = (timestamp) => {

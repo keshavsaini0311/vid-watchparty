@@ -29,27 +29,26 @@ app.prepare().then(() => {
     io.on('connection', (socket) => {
         let currentRoom = null;
         
-        socket.on('createRoom', (roomId,creatorId,vidurl) => {
+        socket.on('createRoom', (roomId) => {
             rooms.set(roomId, { 
                 timestamp: 0.0, 
                 playing: false, 
                 messages: [],
                 creatorId: creatorId,
-                vidurl: vidurl
+                vidurl: vidurl,
+
             });
 
         });
-        socket.on('joinRoom', (roomId) => {
+        socket.on('joinRoom', (roomId,username,avatar) => {
             currentRoom = roomId;
             socket.join(roomId);
             if (!rooms.has(roomId)) {
-                rooms.set(roomId, { 
-                    timestamp: 0.0, 
-                    playing: false, 
-                    messages: [] 
-                });
+                io.to(roomId).emit('noroom');
+                return;
             }
             const roomData = rooms.get(roomId);
+            
             io.to(roomId).emit('sync', roomData);
             io.to(roomId).emit('newmessages', roomData.messages);
             socket.to(roomId).emit('user-joined');
@@ -104,6 +103,11 @@ app.prepare().then(() => {
         socket.on('disconnecting', () => {
             if (currentRoom) {
                 socket.leave(currentRoom);
+                const roomData = rooms.get(currentRoom);
+                if (roomData) {
+                    roomData.users.delete(socket.id);
+                    io.to(currentRoom).emit('sync', roomData);
+                }
                 setTimeout(() => cleanupEmptyRoom(currentRoom), 1000);
             }
         });

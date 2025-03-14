@@ -9,8 +9,9 @@ export default function ChatPanel({
   messages, 
   user, 
   roomId, 
-  onToggleChat,
-  onScroll 
+  onToggleChat, 
+  onScroll
+
 }) {
   const scroll = useRef();
 
@@ -26,7 +27,7 @@ export default function ChatPanel({
         chatopen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
       }`}
       style={{ height: 'calc(100vh - 3rem)' }}
-    >
+    > 
       {/* Mobile chat header */}
       <div className="md:hidden flex items-center justify-between px-4 py-2 bg-accent/50 border-b border-border">
         <h2 className="text-lg font-medium text-foreground">Chat</h2>
