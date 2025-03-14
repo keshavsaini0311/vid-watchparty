@@ -28,11 +28,20 @@ app.prepare().then(() => {
 
     io.on('connection', (socket) => {
         let currentRoom = null;
+        
+        socket.on('createRoom', (roomId,creatorId,vidurl) => {
+            rooms.set(roomId, { 
+                timestamp: 0.0, 
+                playing: false, 
+                messages: [],
+                creatorId: creatorId,
+                vidurl: vidurl
+            });
 
+        });
         socket.on('joinRoom', (roomId) => {
             currentRoom = roomId;
             socket.join(roomId);
-            
             if (!rooms.has(roomId)) {
                 rooms.set(roomId, { 
                     timestamp: 0.0, 
@@ -40,12 +49,17 @@ app.prepare().then(() => {
                     messages: [] 
                 });
             }
-            
             const roomData = rooms.get(roomId);
             io.to(roomId).emit('sync', roomData);
             io.to(roomId).emit('newmessages', roomData.messages);
             socket.to(roomId).emit('user-joined');
         });
+
+        socket.on("getRoomInfo", (roomId) => {
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            io.to(roomId).emit('roomInfo', roomData);
+          });
 
         socket.on('webrtc_offer', (roomId, offer) => {
             if (!roomId || !offer) return;

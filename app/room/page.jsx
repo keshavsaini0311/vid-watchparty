@@ -6,9 +6,11 @@ import { Card } from '@/components/ui/card';
 import { Upload, Loader2, CheckCircle2, XCircle, Video } from 'lucide-react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { app } from '@/lib/firebase';
+import { useSocket } from '@/app/context/SocketContext';
 import { toast } from 'sonner';
 
 function page() {
+  const socket = useSocket();
   const router = useRouter();
   const fileRef = useRef();
   const [file, setFile] = useState(undefined);
@@ -24,8 +26,9 @@ function page() {
       try {
         const response = await fetch('/api/me');
         const data = await response.json();
-        console.log(data);
-        setformdata({ ...formdata, id: data._id });
+        if(data.success){
+          setformdata({ ...formdata, id: data.user._id });
+        }
       } catch (error) {
         console.log(error);
       }
@@ -65,20 +68,13 @@ function page() {
   const handlesubmit = async (event) => {
     event.preventDefault();
     try {
-      const res = await fetch("/api/vid", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formdata),
-      });
-      const data = await res.json();
+      // Generate a random 6-character room ID
+      const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
       
-      if (data.success === false) {
-        console.log(data.message);
-        return;
-      }
-      router.push(`/room/${formdata.id}`);
+      // Create room through socket
+      socket.emit('createRoom', roomId, formdata.id, formdata.vidurl);
+      // Redirect to the new room
+      router.push(`/room/${roomId}`);
     } catch (error) {
       console.log(error);
     }

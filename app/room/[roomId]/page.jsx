@@ -20,27 +20,29 @@ const page = ({params}) => {
     const { toast } = useToast();
     
     useEffect(() => {
-        async function getvid() {
+        async function getuser() {
           try {
-            const response = await fetch(`/api/users/search/${roomId}`);
-            const data = await response.json();
-            setVidurl(data.user.vidurl);
+            // Get current user information
             const res = await fetch(`/api/me`);
             const d = await res.json();
-            setUser(d);            
+            if(d.success){
+              setUser(d.user);            
+            }else{
+              console.log(d.error);
+            }
           } catch (error) {
             console.log(error);
           }
         }
-        getvid();
-    }, [roomId]); 
+        getuser();
+    }, [socket, roomId]); 
            
     useEffect(() => {
-        if (!socket || !roomId || !vidurl) return;
+        if (!socket || !roomId ) return;
 
         // Join room
         socket.emit('joinRoom', roomId);
-
+        socket.emit("getRoomInfo", roomId);
         // Setup event listeners
         const handleSync = (state) => {
             setPlaying(state.playing);
@@ -73,6 +75,7 @@ const page = ({params}) => {
         socket.on('play', handlePlay);
         socket.on('msg', handleMessage);
         socket.on('newmessages', handleNewMessages);
+        socket.on('roomInfo', handleRoomInfo);
 
         // Cleanup function
         return () => {
@@ -86,6 +89,10 @@ const page = ({params}) => {
     const handlePlay = (timestamp) => {
         const newState = { timestamp, playing: true };
         socket.emit('playPause', roomId, newState);
+    };
+
+    const handleRoomInfo = (roomInfo) => {
+        setVidurl(roomInfo.vidurl);
     };
 
     const handlePause = (timestamp) => {
@@ -119,8 +126,8 @@ const page = ({params}) => {
     };
     
     return (
-        <div className='flex h-screen bg-[#0A0A0A] overflow-hidden'>
-            <div className='flex-1 flex flex-col relative bg-[#111111]'>
+        <div className='flex h-screen bg-background overflow-hidden'>
+            <div className='flex-1 flex flex-col relative'>
                 <RoomHeader 
                     roomId={roomId}
                     chatopen={chatopen}
@@ -130,7 +137,7 @@ const page = ({params}) => {
                     copied={copied}
                 />
                 
-                <div className="flex-1 flex relative bg-[#0D0D0D]">
+                <div className="flex-1 flex relative">
                     <VideoPlayer 
                         vidurl={vidurl}
                         onPlay={handlePlay}
