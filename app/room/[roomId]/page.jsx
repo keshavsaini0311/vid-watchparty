@@ -18,6 +18,7 @@ const page = ({params}) => {
     const [messages, setMessages] = useState([]);
     const [copied, setCopied] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [isroom, setIsroom] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -46,7 +47,6 @@ const page = ({params}) => {
         // Join room
         
         socket.emit('joinRoom', roomId);
-        socket.emit("getRoomInfo", roomId);
         // Setup event listeners
         const handleSync = (state) => {
             setPlaying(state.playing);
@@ -87,6 +87,8 @@ const page = ({params}) => {
             socket.off('sync', handleSync);
             socket.off('play', handlePlay);
             socket.off('msg', handleMessage);
+            socket.off('roomInfo', handleRoomInfo);
+            socket.off('noroom', handleNoRoom);
             socket.off('newmessages', handleNewMessages);
         };
     }, [socket, roomId, vidurl, chatopen]);
@@ -98,9 +100,11 @@ const page = ({params}) => {
 
     const handleRoomInfo = (roomInfo) => {
         setVidurl(roomInfo.vidurl);
+        setIsroom(true);
     };
 
     const handleNoRoom = () => {
+        setIsroom(false);
         toast({
             title: "Room not found",
             description: "Please try again.",
@@ -139,6 +143,12 @@ const page = ({params}) => {
     };
     
     return (
+        <>
+        {!isroom?
+        <div className='loading-container'>
+            <div className='loading-spinner'></div>
+        </div>
+        :
         <div className='flex h-screen bg-background overflow-hidden'>
             <div className='flex-1 flex flex-col relative'>
                 <RoomHeader 
@@ -148,7 +158,7 @@ const page = ({params}) => {
                     onToggleChat={toggleChat}
                     onCopyRoomId={copyRoomId}
                     copied={copied}
-                />
+                    />
                 
                 <div className="flex-1 flex relative">
                     <VideoPlayer 
@@ -157,7 +167,7 @@ const page = ({params}) => {
                         onPause={handlePause}
                         playing={playing}
                         currentTime={currentTime}
-                    />
+                        />
 
                     <ChatPanel 
                         chatopen={chatopen}
@@ -165,10 +175,11 @@ const page = ({params}) => {
                         user={user}
                         roomId={roomId}
                         onToggleChat={toggleChat}
-                    />
+                        />
                 </div>
             </div>
-        </div>
+        </div>}
+        </>
     );
 };
 
