@@ -19,6 +19,7 @@ const page = ({params}) => {
     const [copied, setCopied] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isroom, setIsroom] = useState(false);
+    const [users, setUsers] = useState([]);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -40,15 +41,14 @@ const page = ({params}) => {
         }
         getuser();
     }, [socket, roomId]); 
-           
     useEffect(() => {
-        if (!socket || !roomId ) return;
+        if (!socket || !roomId ||!user) return;
 
         // Join room
-        
-        socket.emit('joinRoom', roomId);
+        socket.emit('joinRoom', roomId,user.username,user.avatar);
         // Setup event listeners
         const handleSync = (state) => {
+            
             setPlaying(state.playing);
             setCurrentTime(state.timestamp);
         };
@@ -91,7 +91,7 @@ const page = ({params}) => {
             socket.off('noroom', handleNoRoom);
             socket.off('newmessages', handleNewMessages);
         };
-    }, [socket, roomId, vidurl, chatopen]);
+    }, [socket, roomId, vidurl, chatopen,user]);
 
     const handlePlay = (timestamp) => {
         const newState = { timestamp, playing: true };
@@ -99,6 +99,7 @@ const page = ({params}) => {
     };
 
     const handleRoomInfo = (roomInfo) => {
+        setUsers(roomInfo.users);
         setVidurl(roomInfo.vidurl);
         setIsroom(true);
     };
@@ -158,6 +159,7 @@ const page = ({params}) => {
                     onToggleChat={toggleChat}
                     onCopyRoomId={copyRoomId}
                     copied={copied}
+                    users={users}
                     />
                 
                 <div className="flex-1 flex relative">
@@ -175,6 +177,7 @@ const page = ({params}) => {
                         user={user}
                         roomId={roomId}
                         onToggleChat={toggleChat}
+                        users={users}
                         />
                 </div>
             </div>

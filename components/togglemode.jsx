@@ -9,7 +9,7 @@ export default function ModeToggle() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <div className="fixed top-2 right-16 z-40">
+    <div className="fixed top-2 right-2 z-40">
       <Button
         variant="outline"
         size="icon"

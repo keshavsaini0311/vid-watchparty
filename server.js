@@ -36,7 +36,7 @@ app.prepare().then(() => {
                 messages: [],
                 creatorId: creatorId,
                 vidurl: vidurl,
-
+                users: [],
             });
 
         });
@@ -48,7 +48,11 @@ app.prepare().then(() => {
                 return;
             }
             const roomData = rooms.get(roomId);
-            
+            //check if user already exists
+            const userExists = roomData.users.some(user => user.username === username);
+            if (!userExists) {
+                roomData.users.push({username:username,avatar:avatar,id:socket.id});
+            }
             io.to(roomId).emit('sync', roomData);
             io.to(roomId).emit('roomInfo', roomData);
             io.to(roomId).emit('newmessages', roomData.messages);
@@ -102,8 +106,8 @@ app.prepare().then(() => {
                 socket.leave(currentRoom);
                 const roomData = rooms.get(currentRoom);
                 if (roomData) {
-                    roomData.users.delete(socket.id);
-                    io.to(currentRoom).emit('sync', roomData);
+                    roomData.users = roomData.users.filter(user => user.id !== socket.id);
+                    io.to(currentRoom).emit('roomInfo', roomData);
                 }
                 setTimeout(() => cleanupEmptyRoom(currentRoom), 1000);
             }
