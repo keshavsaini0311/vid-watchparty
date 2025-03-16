@@ -1,15 +1,9 @@
 import React, { useState } from 'react'
 import { Send } from 'lucide-react';
-import { io } from 'socket.io-client';
-
-const socket = io("http://localhost:3000", {
-    transports: ['websocket'],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 2000,
-});
+import { useSocket } from '@/app/context/SocketContext';
 
 export default function Inputmessage(props) {
+    const socket = useSocket();
     const [message, setMessage] = useState("");
     const user = props.user;
     const roomId = props.roomId;

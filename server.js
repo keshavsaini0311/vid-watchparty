@@ -17,55 +17,109 @@ app.prepare().then(() => {
         },
     });
 
-    let rooms = {};
+    const rooms = new Map();
+
+    const cleanupEmptyRoom = (roomId) => {
+        const room = io.sockets.adapter.rooms.get(roomId);
+        if (!room || room.size === 0) {
+            rooms.delete(roomId);
+        }
+    };
 
     io.on('connection', (socket) => {
-        console.log(`User connected: ${socket.id}`);
+        let currentRoom = null;
+        
+        socket.on('createRoom', (roomId,creatorId,vidurl) => {
+            rooms.set(roomId, { 
+                timestamp: 0.0, 
+                playing: false, 
+                messages: [],
+                creatorId: creatorId,
+                vidurl: vidurl,
+                users: [],
+            });
 
-        socket.on('joinRoom', (roomId) => {
+        });
+        socket.on('joinRoom', (roomId,username,avatar) => {
+            currentRoom = roomId;
             socket.join(roomId);
-            if (!rooms[roomId]) {
-                rooms[roomId] = { timestamp: 0.0, playing: false, messages: [] };
+            if (!rooms.has(roomId)) {
+                io.to(roomId).emit('noroom');
+                return;
             }
-            io.to(roomId).emit('sync', rooms[roomId]);
-            io.to(roomId).emit('newmessages', rooms[roomId].messages);
-            // Notify others in the room about the new user joining
+            const roomData = rooms.get(roomId);
+            //check if user already exists
+            const userExists = roomData.users.some(user => user.username === username);
+            if (!userExists) {
+                roomData.users.push({username:username,avatar:avatar,id:socket.id});
+            }
+            io.to(roomId).emit('sync', roomData);
+            io.to(roomId).emit('roomInfo', roomData);
+            io.to(roomId).emit('newmessages', roomData.messages);
             socket.to(roomId).emit('user-joined');
         });
 
-        // WebRTC Signaling
+       
+
         socket.on('webrtc_offer', (roomId, offer) => {
-            socket.to(roomId).emit('webrtc_offer', offer);
+            if (!roomId || !offer) return;
+            const room = io.sockets.adapter.rooms.get(roomId);
+            if (room && room.size > 1) {
+                socket.to(roomId).emit('webrtc_offer', offer);
+            }
         });
 
         socket.on('webrtc_answer', (roomId, answer) => {
+            if (!roomId || !answer) return;
             socket.to(roomId).emit('webrtc_answer', answer);
         });
 
         socket.on('webrtc_ice_candidate', (roomId, candidate) => {
+            if (!roomId || !candidate) return;
             socket.to(roomId).emit('webrtc_ice_candidate', candidate);
         });
 
         socket.on('playPause', (roomId, state) => {
-            rooms[roomId].timestamp = state.timestamp;
-            rooms[roomId].playing = state.playing;
-            io.to(roomId).emit('play', rooms[roomId]);
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.timestamp = state.timestamp;
+            roomData.playing = state.playing;
+            io.to(roomId).emit('play', roomData);
         });
 
         socket.on('seek', (roomId, state) => {
-            rooms[roomId].timestamp = state.timestamp;
-            io.to(roomId).emit('sync', rooms[roomId]);
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.timestamp = state.timestamp;
+            io.to(roomId).emit('sync', roomData);
         });
 
         socket.on('msg_received', (roomId, msg) => {
-            rooms[roomId].messages=[...rooms[roomId].messages,msg];
+            const roomData = rooms.get(roomId);
+            if (!roomData) return;
+            roomData.messages = [...roomData.messages, msg];
             io.to(roomId).emit('msg', msg);
         });
 
-        socket.on('disconnect', () => {
-            console.log(`User disconnected: ${socket.id}`);
+        socket.on('disconnecting', () => {
+            if (currentRoom) {
+                socket.leave(currentRoom);
+                const roomData = rooms.get(currentRoom);
+                if (roomData) {
+                    roomData.users = roomData.users.filter(user => user.id !== socket.id);
+                    io.to(currentRoom).emit('roomInfo', roomData);
+                }
+                setTimeout(() => cleanupEmptyRoom(currentRoom), 1000);
+            }
         });
     });
+
+    // Periodic cleanup of empty rooms
+    setInterval(() => {
+        for (const roomId of rooms.keys()) {
+            cleanupEmptyRoom(roomId);
+        }
+    }, 300000); // Clean up every 5 minutes
 
     httpServer.listen(port, (err) => {
         if (err) throw err;
