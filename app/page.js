@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Video, Users } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const router = useRouter();
@@ -16,8 +17,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-black dark:to-black py-24 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-black dark:to-black">
+      <Navbar />
+      <div className="container mx-auto max-w-4xl py-24 px-4">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent mb-4">
             Watch Together
@@ -41,6 +43,7 @@ export default function Home() {
                   type="text"
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary/50 dark:focus:ring-primary/30 transition-all"
                   placeholder="Enter Room ID"
+                  autoComplete="off"
                 />
                 <Button
                   onClick={handleClick}
