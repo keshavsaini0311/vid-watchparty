@@ -26,6 +26,12 @@ export default function ChatPanel({
     typeof user.avatar === 'string'
   ) || [];
 
+  // Create a map of usernames to their avatars for quick lookup
+  const userAvatars = validUsers.reduce((acc, user) => {
+    acc[user.username] = user.avatar;
+    return acc;
+  }, {});
+
   useEffect(() => {
     if (scroll.current && chatopen) {
       scroll.current.scrollIntoView({ behavior: 'smooth' });
@@ -92,7 +98,7 @@ export default function ChatPanel({
                 message={msg.message} 
                 username={msg.username} 
                 time={msg.time} 
-                avatar={user.avatar}
+                avatar={userAvatars[msg.username] || `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.username)}`}
               />
             </div>
           ))}

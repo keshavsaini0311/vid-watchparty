@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "react-hot-toast";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, Camera } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 export default function ProfilePage() {
@@ -16,6 +16,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
   const [profileData, setProfileData] = useState({
     username: "",
     email: "",
@@ -56,6 +58,52 @@ export default function ProfilePage() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      const response = await axios.put('/api/users/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        setUser(prev => ({
+          ...prev,
+          avatar: response.data.avatar
+        }));
+        toast.success('Avatar updated successfully');
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error(error.response?.data?.error || 'Failed to update avatar');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handleProfileUpdate = async (e) => {
@@ -111,15 +159,37 @@ export default function ProfilePage() {
               <CardTitle className="text-xl">Profile Picture</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
-              <Avatar className="h-32 w-32">
-                <AvatarImage 
-                  src={user?.avatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.username || "User")} 
-                  alt={user?.username || "User"} 
+              <div className="relative group">
+                <Avatar className="h-32 w-32 ring-2 ring-primary ring-offset-2 ring-offset-background transition-all duration-300 group-hover:ring-offset-4">
+                  <AvatarImage 
+                    src={user?.avatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.username || "User")} 
+                    alt={user?.username || "User"} 
+                  />
+                  <AvatarFallback>
+                    <User className="h-12 w-12" />
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  onClick={handleAvatarClick}
+                  disabled={uploadingAvatar}
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
                 />
-                <AvatarFallback>
-                  <User className="h-12 w-12" />
-                </AvatarFallback>
-              </Avatar>
+              </div>
               <div className="text-center">
                 <h2 className="text-xl font-semibold">{user?.username}</h2>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
