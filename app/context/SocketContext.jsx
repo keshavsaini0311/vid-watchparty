@@ -13,8 +13,17 @@ export function SocketProvider({ children }) {
         setIsConnecting(true);
         setError(null);
         
-        // Create socket connection
-        const newSocket = io("http://localhost:3000", {
+        // Create socket connection for production
+        const newSocket = io(process.env.NEXT_PUBLIC_API_URL, {
+            transports: ["websocket"],
+            autoConnect: true,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+        });
+
+        // Create socket connection for development
+        const devSocket = io("http://localhost:3000", {
             transports: ["websocket"],
             autoConnect: true,
             reconnection: true,
