@@ -19,10 +19,13 @@ import {
 import React from "react"
 import { toast } from "react-hot-toast"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast";
+
 
 
 export default function page() {
   const router = useRouter();
+  const { toast } = useToast();
   const [SignUpdata, setSignUpdata] = React.useState({
     username: "",
     email: "",
@@ -44,11 +47,16 @@ export default function page() {
         body: JSON.stringify(SignUpdata),
       });
       const data = await res.json();
+      console.log(data);
+      
       if(data.success===false){
         toast.error(data.message);
         return
       }
-      toast.success("User created successfully");
+      toast({
+        title: "Signup Successful",
+        description: "Please login to continue.",
+    });
       
     } catch (error) {
       console.log(error);
@@ -67,10 +75,18 @@ export default function page() {
       });
       const data = await res.json();
       if(data.success===false){
-        toast.error("Invalid credentials");
+        toast({
+          title: "Login Failed",
+          description: "Invalid credentials",
+        })
         return
       }
-      toast.success("Logged in successfully");
+      if(data.success===true){
+        toast({
+          title: "Login Successful",
+          description: "Welcome!",
+      });
+      }
       router.push("/");
       
     } catch (error) {
